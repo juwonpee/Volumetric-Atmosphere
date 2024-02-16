@@ -1,0 +1,115 @@
+#pragma enable_d3d11_debug_symbols 
+
+#pragma kernel worleyCompute
+#pragma kernel worleyPreview
+static const int threadGroupSize = 4;
+
+RWTexture3D<float4> buffer; // RenderTexture
+
+
+int resolution;
+
+// Maximum of 4 channels are supported
+StructuredBuffer<int> numCells;
+StructuredBuffer<float> intensity;
+StructuredBuffer<int> neighborSearchDepth;
+StructuredBuffer<float3> points;
+
+
+float3 wrap3(float min, float max, float3 number) {
+    if (number.x < min) {
+        int difference = min - number.x;
+        number.x = max - difference;
+    }
+    else if (number.x >= max) {
+        int difference = number.x - max;
+        number.x = min + difference;
+    }
+    if (number.y < min) {
+        int difference = min - number.y;
+        number.y = max - difference;
+    }
+    else if (number.y >= max) {
+        int difference = number.y - max;
+        number.y = min + difference;
+    }
+    if (number.z < min) {
+        int difference = min - number.z;
+        number.z = max - difference; 
+    }
+    else if (number.z >= max) {
+        int difference = number.z - max;
+        number.z = min + difference;
+    }
+    return number;
+}
+
+float calculateMinimumDistance(float3 currentPosition, int numCells, int neighborSearchDepth, StructuredBuffer<float3> points, int pointsOffset) {
+    float minimumDistance = 1;
+    int3 currentCell = currentPosition * numCells;
+    for (int x = -neighborSearchDepth; x <= neighborSearchDepth; x++) {
+        for (int y = -neighborSearchDepth; y <= neighborSearchDepth; y++) {
+            for (int z = -neighborSearchDepth; z <= neighborSearchDepth; z++) {
+                int3 offset = int3(x,y,z);
+                int3 offsetCell = wrap3(0, numCells, currentCell + offset);
+                int offsetCellIndex = offsetCell.x*numCells*numCells + offsetCell.y*numCells + offsetCell.z + pointsOffset;
+                float3 pointPosition = (currentCell + offset + points[offsetCellIndex])/numCells;
+                
+                // If cell is null, then dont calculate
+                if (points[offsetCellIndex].x == 1) {
+                    continue;
+                }
+                
+                minimumDistance = min(minimumDistance, distance(currentPosition, pointPosition));
+            }
+        }
+    }
+    return minimumDistance;
+}
+
+
+[numthreads(threadGroupSize,threadGroupSize,threadGroupSize)]
+void worleyCompute (uint3 id : SV_DispatchThreadID)
+{
+    float3 currentPosition = float3(id.x, id.y, id.z) / (float)resolution;
+    //currentPosition.z = depthSelect;
+
+    float4 color = 0;
+
+    for (int x = 0; x < 4; x++) {
+        int pointsOffset = 0;
+        for (int y = 0; y < x; y++) {
+            pointsOffset += (int)pow(numCells[y], 3);
+        }
+        color[x] = clamp(1-calculateMinimumDistance(currentPosition, numCells[x], neighborSearchDepth[x], points, pointsOffset) * intensity[x],0,1);
+    }
+
+    buffer[id.xyz] = dot(color, float4(1,1,1,1))/4;
+}
+
+
+
+RWTexture2D<float4> bufferPreview;
+int activeChannel;
+float depthSelect;
+
+[numthreads(threadGroupSize,threadGroupSize,1)]
+void worleyPreview (uint3 id : SV_DispatchThreadID) {
+    int3 currentPosition = int3(id.x, id.y, 0);
+    currentPosition.z = depthSelect * resolution;
+
+    if (activeChannel == 0) {
+        bufferPreview[id.xy] = buffer[currentPosition].x;
+    }
+    else if (activeChannel == 1) {
+        bufferPreview[id.xy] = buffer[currentPosition].y;
+    }
+    else if (activeChannel == 2) {
+        bufferPreview[id.xy] = buffer[currentPosition].z;
+    }
+    else if (activeChannel == 3) {
+        bufferPreview[id.xy] = buffer[currentPosition];
+    }
+    bufferPreview[id.xy] = depthSelect;
+}
+

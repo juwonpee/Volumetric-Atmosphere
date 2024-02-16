@@ -1,0 +1,8 @@
+*.csproj
+*.vscode
+*ffs_gui
+*UserSettings
+*Build
+*Logs
+*Temp
+*Library

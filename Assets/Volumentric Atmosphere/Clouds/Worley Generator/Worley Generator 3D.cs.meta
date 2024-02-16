@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5eeecb6dcee1fba48929087ff3d9745d
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - worleyShader: {fileID: 7200000, guid: 95da9d88026ffc24ab60cbbbd5b2cf88, type: 3}
+  - worleyTexture: {instanceID: 0}
+  - worleyShaderPreview: {fileID: 7200000, guid: 923a88dc706431fa88ea7dda6d838bb7, type: 3}
+  - noiseSettings: {fileID: 11400000, guid: ff2965a0a6c67cc4d823e9f5e2ae2ff8, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

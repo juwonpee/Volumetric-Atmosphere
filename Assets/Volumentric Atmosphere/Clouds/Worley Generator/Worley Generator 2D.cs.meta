@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: fc88ef42b01293248bf25d94537aaff1
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - worleyShader: {fileID: 7200000, guid: 82b526e5075fc4249a22a1861daf93ee, type: 3}
+  - worleyTexture: {instanceID: 0}
+  - worley2DMaterial: {fileID: 2100000, guid: 1b7d1e0fb9ddaa043a5b6e2bb83c79a8, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

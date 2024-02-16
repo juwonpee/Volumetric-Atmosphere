@@ -1,0 +1,56 @@
+// Each #kernel tells which function to compile; you can have many kernels
+
+#pragma enable_d3d11_debug_symbols 
+#pragma kernel CSMain
+
+RWTexture2D<float4> buffer;
+StructuredBuffer<float2> points;
+
+static const int threadGroupSize = 8;
+
+int resolution;
+int numCells;
+float intensity;
+
+
+float2 wrap2(float min, float max, float2 number) {
+    if (number.x < min) {
+        int difference = min - number.x;
+        number.x = max - difference;
+    }
+    else if (number.x >= max) {
+        int difference = number.x - max;
+        number.x = min + difference;
+    }
+    if (number.y < min) {
+        int difference = min - number.y;
+        number.y = max - difference;
+    }
+    else if (number.y >= max) {
+        int difference = number.y - max;
+        number.y = min + difference;
+    }
+    return number;
+}
+
+[numthreads(threadGroupSize,threadGroupSize,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float2 currentPosition = float2(id.x, id.y) / resolution;
+    int2 currentCell = currentPosition * numCells;
+
+    float minimumDistance = 1;
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            int2 offset = int2(x,y);
+            int2 offsetCell = wrap2(0, numCells, currentCell + offset);
+            int offsetCellIndex = offsetCell.x*numCells + offsetCell.y;
+
+            float2 pointPosition = (currentCell + offset + points[offsetCellIndex])/numCells;
+
+            minimumDistance = min(minimumDistance, distance(currentPosition, pointPosition));
+        }
+    }
+
+    buffer[id.xy] = 1-minimumDistance * intensity;
+}
